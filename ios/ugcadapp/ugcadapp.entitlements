@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Sign in with Apple (App Store guideline 4.8: the app also offers Google sign-in). -->
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
+	<!-- Push notifications. "development" here; the distribution (App Store / TestFlight) signing
+	     profile replaces it with "production" automatically at export. -->
+	<key>aps-environment</key>
+	<string>development</string>
+	<!-- Universal links: https://ugcad.io/* and https://www.ugcad.io/* open in the app.
+	     Needs https://ugcad.io/.well-known/apple-app-site-association (see README, Owner setup). -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:ugcad.io</string>
+		<string>applinks:www.ugcad.io</string>
+	</array>
+</dict>
+</plist>

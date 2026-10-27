@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Overrides react-native-webview's file_provider_paths.xml (which exposes the WHOLE external
+  storage). Only app-private folders are shared:
+  - external-files-path: where the WebView saves camera photos/videos before upload
+  - cache-path / files-path / external-cache-path: downloads handed to the share sheet
+-->
+<paths>
+    <external-files-path name="captures" path="." />
+    <external-cache-path name="external_cache" path="." />
+    <cache-path name="cache" path="." />
+    <files-path name="files" path="." />
+</paths>

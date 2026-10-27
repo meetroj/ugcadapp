@@ -1,0 +1,110 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Push (Android 13+ runtime permission, requested through the JS bridge `push:register`). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Camera capture for `<input type=file capture>` and video/photo recording. NOTE for the JS
+         side: react-native-webview only offers the camera in its file chooser when this permission
+         is already GRANTED (declared + not granted = no camera option, and with `capture` the
+         chooser does nothing), so request it through the bridge before opening the chooser. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Microphone, only for in-page getUserMedia / video recording requested by the website. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- Gallery access. Android 13+: granular media permissions (+ partial access on 14+).
+         Android 12 and below: READ_EXTERNAL_STORAGE. The system file chooser itself needs none
+         of these; they exist so the shell can ask up front through the bridge. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <!-- react-native-webview's DownloadManager path on Android 9 and below only. -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+
+    <!-- Hardware is optional so the app installs on devices without a camera / microphone. -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
+
+    <!-- Android 11+ package visibility: lets Linking.canOpenURL/openURL reach UPI apps (Razorpay),
+         the dialer and mail. -->
+    <queries>
+        <intent><action android:name="android.intent.action.VIEW" /><data android:scheme="upi" /></intent>
+        <intent><action android:name="android.intent.action.VIEW" /><data android:scheme="phonepe" /></intent>
+        <intent><action android:name="android.intent.action.VIEW" /><data android:scheme="gpay" /></intent>
+        <intent><action android:name="android.intent.action.VIEW" /><data android:scheme="tez" /></intent>
+        <intent><action android:name="android.intent.action.VIEW" /><data android:scheme="paytmmp" /></intent>
+        <intent><action android:name="android.intent.action.VIEW" /><data android:scheme="bhim" /></intent>
+        <intent><action android:name="android.intent.action.VIEW" /><data android:scheme="tel" /></intent>
+        <intent><action android:name="android.intent.action.VIEW" /><data android:scheme="mailto" /></intent>
+        <intent><action android:name="android.intent.action.VIEW" /><data android:scheme="https" /></intent>
+    </queries>
+
+    <application
+      android:name=".MainApplication"
+      android:label="@string/app_name"
+      android:icon="@mipmap/ic_launcher"
+      android:roundIcon="@mipmap/ic_launcher_round"
+      android:allowBackup="false"
+      android:fullBackupContent="false"
+      android:dataExtractionRules="@xml/data_extraction_rules"
+      android:theme="@style/AppTheme"
+      android:networkSecurityConfig="@xml/network_security_config"
+      android:supportsRtl="true"
+      android:hardwareAccelerated="true">
+
+      <!-- Push: notification icon (monochrome vector) and accent colour. -->
+      <meta-data
+        android:name="com.google.firebase.messaging.default_notification_icon"
+        android:resource="@drawable/ic_notification" />
+      <meta-data
+        android:name="com.google.firebase.messaging.default_notification_color"
+        android:resource="@color/notification_accent"
+        tools:replace="android:resource" />
+
+      <activity
+        android:name=".MainActivity"
+        android:label="@string/app_name"
+        android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
+        android:launchMode="singleTask"
+        android:windowSoftInputMode="adjustResize"
+        android:theme="@style/SplashTheme"
+        android:exported="true">
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+
+        <!-- App Links: every https://ugcad.io/* and https://www.ugcad.io/* URL opens in the app.
+             autoVerify needs https://ugcad.io/.well-known/assetlinks.json (and the www host)
+             listing package com.ugcapp + the Play App Signing SHA-256 (see README, Owner setup). -->
+        <intent-filter android:autoVerify="true">
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" android:host="ugcad.io" />
+            <data android:scheme="https" android:host="www.ugcad.io" />
+        </intent-filter>
+
+        <!-- Custom scheme: ugcad://<path> -->
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="ugcad" />
+        </intent-filter>
+      </activity>
+
+      <!-- react-native-webview already declares the `${applicationId}.fileprovider` provider
+           (RNCWebViewFileProvider) used for camera-capture temp files. Its path list is narrowed in
+           res/xml/file_provider_paths.xml (this app's copy overrides the library's). -->
+    </application>
+</manifest>

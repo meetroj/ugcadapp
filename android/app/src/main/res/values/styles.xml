@@ -1,0 +1,22 @@
+<resources>
+
+    <!-- App theme: light, brand-coloured window behind the system bars. The activity draws
+         edge-to-edge and pads itself by the bar/cutout/keyboard insets (see MainActivity), so the
+         website's env(safe-area-inset-*) stay 0. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
+        <item name="android:windowBackground">@color/splash_background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+
+    <!-- Launch theme (androidx core-splashscreen works on every API level): brand background
+         with the app icon centred; MainActivity switches to AppTheme once started. -->
+    <style name="SplashTheme" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/AppTheme</item>
+    </style>
+
+</resources>

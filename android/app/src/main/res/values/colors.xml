@@ -1,0 +1,7 @@
+<resources>
+    <!-- Brand background: splash and window background behind the system bars. -->
+    <color name="splash_background">#F4F5FF</color>
+    <!-- Behind the adaptive launcher icon (sampled from the logo plate). -->
+    <color name="ic_launcher_background">#05054C</color>
+    <color name="notification_accent">#667EEA</color>
+</resources>
