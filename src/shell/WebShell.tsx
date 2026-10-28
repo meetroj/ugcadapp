@@ -22,12 +22,22 @@ import type {
   ShouldStartLoadRequest,
   WebViewMessageEvent,
 } from 'react-native-webview/lib/WebViewTypes';
-import { BRAND_BG, BRAND_INK, SHELL_VERSION, SPLASH_MAX_MS, WEB_URL } from '../config';
+import {
+  APP_ENTRY_PATH,
+  BRAND_BG,
+  BRAND_INK,
+  HIDE_LANDING_PAGE,
+  SHELL_VERSION,
+  SPLASH_MAX_MS,
+  WEB_ORIGIN,
+  WEB_URL,
+} from '../config';
 import { buildDispatchScript, handleBridgeMessage, type NativeDetail, type Payload } from './bridge';
 import { getInitialPath, navigateScript, subscribeDeepLinks, toWebPath } from './deepLinks';
 import { downloadFile } from './download';
 import ErrorScreen, { useLoadErrorKind } from './ErrorScreen';
 import { createHandlers } from './handlers';
+import { isLandingPath, LANDING_GUARD_JS } from './landingGuard';
 import NotificationBanner from './NotificationBanner';
 import { getInitialNotificationPath, startPushListeners, type ForegroundNotice } from './push';
 import Splash from './Splash';
@@ -39,7 +49,9 @@ const PLATFORM = Platform.OS === 'ios' ? 'ios' : 'android';
 /** The three flags the website reads to switch into app mode. */
 const INJECTED_BEFORE_LOAD = `window.__UGCAD_SHELL__=true;window.__UGCAD_PLATFORM__=${JSON.stringify(
   PLATFORM,
-)};window.__UGCAD_SHELL_VERSION__=${JSON.stringify(SHELL_VERSION)};true;`;
+)};window.__UGCAD_SHELL_VERSION__=${JSON.stringify(SHELL_VERSION)};${
+  HIDE_LANDING_PAGE ? LANDING_GUARD_JS : ''
+}true;`;
 
 const COMMON_PROPS: WebViewProps = {
   applicationNameForUserAgent: `UGCadShell/${SHELL_VERSION}`,
@@ -95,6 +107,16 @@ function shouldStartLoad(req: ShouldStartLoadRequest): boolean {
 
 const stripHash = (u: string) => u.split('#')[0];
 
+/** On iOS a root link is the marketing landing page; inside the app it means the entry (login) screen. */
+const appPath = (path: string): string =>
+  HIDE_LANDING_PAGE && isLandingPath(path) ? APP_ENTRY_PATH : path;
+
+const pathFromAppUrl = (url: string): string | null => {
+  if (url === WEB_ORIGIN) return '/';
+  if (url.startsWith(`${WEB_ORIGIN}/`)) return url.slice(WEB_ORIGIN.length);
+  return toWebPath(url);
+};
+
 export default function WebShell() {
   const insets = useSafeAreaInsets();
   const webRef = useRef<WebView>(null);
@@ -138,9 +160,11 @@ export default function WebShell() {
 
   const handlers = useMemo(() => createHandlers(markReady), [markReady]);
 
-  // Start URL: the launching deep link if there was one, else the site root.
+  // Start URL: the launching deep link if there was one, else the login screen.
+  // A root universal link is also normalized to login so the marketing page is
+  // never the app's first screen.
   useEffect(() => {
-    getInitialPath().then(path => setStartUrl(path ? WEB_URL.slice(0, -1) + path : WEB_URL));
+    getInitialPath().then(path => setStartUrl(path ? `${WEB_ORIGIN}${appPath(path)}` : WEB_URL));
   }, []);
 
   useEffect(() => {
@@ -153,7 +177,7 @@ export default function WebShell() {
     return () => clearTimeout(t);
   }, [attempt, markReady]);
 
-  useEffect(() => subscribeDeepLinks(path => run(navigateScript(path))), [run]);
+  useEffect(() => subscribeDeepLinks(path => run(navigateScript(appPath(path)))), [run]);
 
   useEffect(() => {
     getInitialNotificationPath().then(path => path && openPath(path));
@@ -183,7 +207,7 @@ export default function WebShell() {
       }
       if (!homedRef.current) {
         homedRef.current = true;
-        run(`window.location.replace('/');true;`);
+        run(`window.location.replace(${JSON.stringify(APP_ENTRY_PATH)});true;`);
         return true;
       }
       const now = Date.now();
@@ -211,9 +235,21 @@ export default function WebShell() {
     }
     // Our own pages navigate the main view; payment pop-ups get their own window.
     const path = toWebPath(url);
-    if (path) run(navigateScript(path));
+    if (path) run(navigateScript(appPath(path)));
     else setPopupUrl(url);
   }, [run]);
+
+  const shouldStartMainLoad = useCallback(
+    (req: ShouldStartLoadRequest) => {
+      const path = req.isTopFrame === false ? null : pathFromAppUrl(req.url);
+      if (HIDE_LANDING_PAGE && path && isLandingPath(path)) {
+        run(`window.location.replace(${JSON.stringify(APP_ENTRY_PATH)});true;`);
+        return false;
+      }
+      return shouldStartLoad(req);
+    },
+    [run],
+  );
 
   const probed = useLoadErrorKind(loadError);
   const kind = serverError ? 'server' : probed;
@@ -229,7 +265,7 @@ export default function WebShell() {
           onMessage={(e: WebViewMessageEvent) =>
             handleBridgeMessage(e.nativeEvent.data, e.nativeEvent.url, send, handlers)
           }
-          onShouldStartLoadWithRequest={shouldStartLoad}
+          onShouldStartLoadWithRequest={shouldStartMainLoad}
           onOpenWindow={onOpenWindow}
           onLoadStart={e => {
             mainUrlRef.current = stripHash(e.nativeEvent.url);
@@ -251,7 +287,7 @@ export default function WebShell() {
         />
       ) : null}
 
-      <Splash visible={splash} />
+      <Splash visible={splash && !loadError && !serverError && !gate?.required} />
       {loadError || serverError ? <ErrorScreen kind={kind} onAction={retry} /> : null}
       <NotificationBanner
         notice={notice}

@@ -8,10 +8,12 @@ require Pod::Executable.execute_command('node', ['-p',
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
 
-# @react-native-firebase / GoogleSignIn (Swift pods) need modules: link everything as static
-# frameworks. $RNFirebaseAsStaticFramework tells RNFirebase to build its pods the same way.
-$RNFirebaseAsStaticFramework = true
-use_frameworks! :linkage => :static
+# @react-native-firebase / GoogleSignIn (Swift pods) need modules, so frameworks are on.
+# react-native-firebase 27 resolves firebase-ios-sdk through SPM and requires dynamic pod linkage:
+# static linkage ("SPM + static linkage is not supported") and forcing the RNFB pods static with
+# $RNFirebaseAsStaticFramework both link FirebaseCore into the app, RNFBApp and RNFBMessaging at
+# once and fail with duplicate symbols.
+use_frameworks! :linkage => :dynamic
 
 target 'ugcadapp' do
   config = use_native_modules!

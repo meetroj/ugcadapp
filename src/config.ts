@@ -2,6 +2,7 @@
  * Single place for every value the shell needs to know about the outside world.
  * Nothing here is secret: OAuth client ids are public identifiers.
  */
+import { Platform } from 'react-native';
 import pkg from '../package.json';
 
 /**
@@ -11,8 +12,16 @@ import pkg from '../package.json';
  */
 export const DEV_ORIGIN: string = __DEV__ ? 'http://localhost:3000' : '';
 
-/** The live website the WebView loads. Nothing is bundled in the app. */
-export const WEB_URL: string = DEV_ORIGIN ? `${DEV_ORIGIN}/` : 'https://ugcad.io/';
+/** Website origin used by the shell. Nothing from the website is bundled in the app. */
+export const WEB_ORIGIN: string = DEV_ORIGIN || 'https://ugcad.io';
+
+/**
+ * iOS never opens the marketing landing page: signed-out users start at login.
+ * Android keeps the site root, which is what the client signed off.
+ */
+export const HIDE_LANDING_PAGE: boolean = Platform.OS === 'ios';
+export const APP_ENTRY_PATH: string = HIDE_LANDING_PAGE ? '/auth' : '/';
+export const WEB_URL: string = `${WEB_ORIGIN}${APP_ENTRY_PATH}`;
 
 /** Backend API (the website talks to it itself; the shell only needs it for docs/diagnostics). */
 export const API_BASE = 'https://app.ugcad.io/api';

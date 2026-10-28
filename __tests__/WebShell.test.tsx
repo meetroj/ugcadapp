@@ -38,7 +38,7 @@ describe('WebShell', () => {
     return tree.root.findAllByProps({ testID: 'mock-webview' })[0].props;
   };
 
-  it('loads the live site with the shell markers and the hardened settings', async () => {
+  it('loads the login screen with the shell markers and the hardened settings', async () => {
     const p = await render();
     expect(p.source).toEqual({ uri: WEB_URL });
     expect(p.applicationNameForUserAgent).toMatch(/^UGCadShell\/\d+\.\d+\.\d+/);
@@ -54,6 +54,7 @@ describe('WebShell', () => {
   it('keeps allow-listed pages in the WebView and sends the rest to the OS', async () => {
     const p = await render();
     expect(p.onShouldStartLoadWithRequest({ url: 'https://ugcad.io/x' })).toBe(true);
+    expect(p.onShouldStartLoadWithRequest({ url: 'https://ugcad.io/' })).toBe(false);
     expect(p.onShouldStartLoadWithRequest({ url: 'https://evil.com/' })).toBe(false);
     expect(Linking.openURL).toHaveBeenLastCalledWith('https://evil.com/');
     expect(p.onShouldStartLoadWithRequest({ url: 'upi://pay?pa=a@b' })).toBe(false);

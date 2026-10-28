@@ -1,7 +1,8 @@
 /** Full-screen state shown instead of the website when it cannot load (or the app is too old). */
 import React, { useEffect, useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { BRAND_ACCENT, BRAND_BG, BRAND_INK, WEB_URL } from '../config';
+import { IosErrorScreen } from './iosScreens';
 
 export type ErrorKind = 'offline' | 'load' | 'server' | 'update';
 
@@ -45,6 +46,7 @@ export async function isOffline(timeoutMs = 4000): Promise<boolean> {
 type Props = { kind: ErrorKind; onAction: () => void };
 
 export default function ErrorScreen({ kind, onAction }: Props) {
+  if (Platform.OS === 'ios') return <IosErrorScreen kind={kind} onAction={onAction} />;
   const { title, body, action } = COPY[kind];
   return (
     <View style={styles.root} testID="error-screen">

@@ -24,7 +24,8 @@ describe('dev origin', () => {
   it('release: loads https://ugcad.io only and rejects localhost in every form', () => {
     const { config, policy } = load(false);
     expect(config.DEV_ORIGIN).toBe('');
-    expect(config.WEB_URL).toBe('https://ugcad.io/');
+    expect(config.WEB_ORIGIN).toBe('https://ugcad.io');
+    expect(config.WEB_URL).toBe('https://ugcad.io/auth');
     expect(policy.isAllowedUrl('http://localhost:3000/auth')).toBe(false);
     expect(policy.isAllowedUrl('https://localhost/auth')).toBe(false);
     expect(policy.isTrustedBridgeUrl('http://localhost:3000/')).toBe(false);
@@ -35,7 +36,8 @@ describe('dev origin', () => {
   it('debug: loads the dev server on localhost:3000 only (not other ports or look-alike hosts)', () => {
     const { config, policy } = load(true);
     expect(config.DEV_ORIGIN).toBe('http://localhost:3000');
-    expect(config.WEB_URL).toBe('http://localhost:3000/');
+    expect(config.WEB_ORIGIN).toBe('http://localhost:3000');
+    expect(config.WEB_URL).toBe('http://localhost:3000/auth');
     expect(policy.isAllowedUrl('http://localhost:3000/auth')).toBe(true);
     expect(policy.isTrustedBridgeUrl('http://localhost:3000/')).toBe(true);
     expect(policy.isAllowedUrl('http://localhost:8081/')).toBe(false);
